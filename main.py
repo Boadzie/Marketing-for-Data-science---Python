@@ -1,11 +1,12 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 def main():
-    pages = ['Home', 'Conversion']
+    pages = ['Home', 'Conversion', 'Product Analytics']
 
-    option = st.sidebar.selectbox('Data Science for Marketing', options=pages)
+    option = st.sidebar.selectbox('Data Science for Marketing Dashboards', options=pages)
 
     if option == 'Home':
         st.markdown('# Marketing Dashbaords')
@@ -25,7 +26,8 @@ def main():
         st.markdown('---')
         ##########################################################
         data = load_data()
-        st.dataframe(data)
+        st.dataframe(data[:100])
+        st.write(f'**The shape of the data is {data.shape[0]} Rows and {data.shape[1]} Columns**') 
         st.markdown('---')
         ########################################################
         st.markdown('#### Aggregation by Conversion Rate') 
@@ -50,7 +52,29 @@ def main():
         #########################################################
         st.markdown('#### Conversion rate by Age and Marital Status') 
         marital = by_agemarital(data)
-        st.pyplot(marital)        
+        st.pyplot(marital) 
+        
+    elif option == 'Product Analytics':
+        st.markdown('## Product Analytics Dahsboard') 
+        st.markdown('#### Loading Data - The data is from the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/online+retail)')
+        st.markdown('---')
+        ##########################################################
+        data = load_prod_data()
+        st.dataframe(data[:100])
+        st.write(f'**The shape of the data is {data.shape[0]} Rows and {data.shape[1]} Columns**') 
+        st.markdown('---')
+        ##########################################################
+        st.markdown('#### Monthly Orders Trend') 
+        plot = orders(data)
+        st.pyplot(plot)
+        st.markdown('---')
+        #########################################################
+        st.markdown('#### Monthly Revenue Trend') 
+        plot = revenue(data)
+        st.pyplot(plot)
+        st.markdown('---')
+        #########################################################
+            
 
 
 
@@ -59,7 +83,8 @@ def load_data():
     df = pd.read_csv("./data/bank-additional-full.csv", sep=';')
     df['conversion'] = df['y'].apply(lambda x: 1 if x == 'yes' else 0)
     return df
-    
+
+################### FUNCTIONS FOR CONVERSION DASHBOARD#########################
 def aggregate(df):
     # total number of conversions
     total_cov = df.conversion.sum()
@@ -139,6 +164,55 @@ def by_agemarital(df):
     ax.set_title('Conversion rates by Age & Marital Status')
     ax.set_xlabel('age group')
     ax.set_ylabel('conversion rate (%)')
+
+
+################### FUNCTIONS FOR PRODUCTS DASHBOARD#########################
+
+@st.cache()
+def load_prod_data():
+    df = pd.read_excel(io ="./data/Online-Retail.xlsx", sheet_name='Online Retail')
+    # df['conversion'] = df['y'].apply(lambda x: 1 if x == 'yes' else 0)
+    return df
+    
+
+# revenue trend
+def orders(df):
+    monthly_orders_df = df.set_index('InvoiceDate')['InvoiceNo'].resample('M').nunique()
+    # the plot
+    ax = pd.DataFrame(monthly_orders_df.values).plot(
+        grid=True,
+        figsize=(10,7),
+        legend=False
+    ) 
+    ax.set_xlabel('date')
+    ax.set_ylabel('number of orders/invoices')
+    ax.set_title('Total Number of Orders Over Time')
+    plt.xticks(range(len(monthly_orders_df.index)),
+        [x.strftime('%m.%Y') for x in monthly_orders_df.index],
+        rotation=45
+    )
+    
+def revenue(df):
+    df['Sales'] = df['Quantity'] * df['UnitPrice']
+    monthly_revenue_df = df.set_index('InvoiceDate')['Sales'].resample('M').sum()
+    # the plot
+    ax = pd.DataFrame(monthly_revenue_df.values).plot(
+        grid=True,
+        figsize=(10,7),
+        legend=False
+    )
+    ax.set_xlabel('date')
+    ax.set_ylabel('sales')
+    ax.set_title('Total Revenue Over Time')
+    ax.set_ylim([0, max(monthly_revenue_df.values)+100000])
+    plt.xticks(range(len(monthly_revenue_df.index)),
+        [x.strftime('%m.%Y') for x in monthly_revenue_df.index],
+        rotation=45
+    )
+
+
+
+
 
 
 
