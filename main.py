@@ -74,11 +74,26 @@ def main():
         st.pyplot(plot)
         st.markdown('---')
         #########################################################
+        st.markdown('#### Repeat Sales') 
+        plot = repeat_customers(data)
+        st.pyplot(plot)
+        st.markdown('---')
+        #########################################################
+        st.markdown('#### Monthly Repeat Revenue') 
+        plot = monthly_repeat_rev(data)
+        st.pyplot(plot)
+        st.markdown('---')
+        #########################################################
+        st.markdown('#### Item Analysis') 
+        plot = item_analsis(data)
+        st.pyplot(plot)
+        st.markdown('---')
+        #########################################################
             
 
 
 
-# @st.cache
+@st.cache
 def load_data():
     df = pd.read_csv("./data/bank-additional-full.csv", sep=';')
     df['conversion'] = df['y'].apply(lambda x: 1 if x == 'yes' else 0)
@@ -210,11 +225,127 @@ def revenue(df):
         rotation=45
     )
 
+def repeat_customers(df):
+    # order by invoice
+    invoice_customer_df = df.groupby(
+        by=['InvoiceNo', 'InvoiceDate']
+        ).agg({
+        'Sales': sum,
+        'CustomerID': max,
+        'Country': max,
+        }).reset_index()
+        
+    # agg per month and no of customers
+    monthly_repeat_customers_df = invoice_customer_df.set_index('InvoiceDate').groupby([
+    pd.Grouper(freq='M'), 'CustomerID'
+    ]).filter(lambda x: len(x) > 1).resample('M').nunique()['CustomerID']
+    
+    # monthly unique customers
+    monthly_unique_customers_df = df.set_index('InvoiceDate')['CustomerID'].resample('M').nunique()
+    
+    # repeat percentage
+    monthly_repeat_percentage = monthly_repeat_customers_df/monthly_unique_customers_df*100
+    
+    # the plot 
+    ax = pd.DataFrame(monthly_repeat_customers_df.values).plot(
+    figsize=(10,7)
+    ) 
+    pd.DataFrame(monthly_unique_customers_df.values).plot(
+        ax=ax,
+        grid=True
+    ) 
+    ax2 = pd.DataFrame(monthly_repeat_percentage.values).plot.bar(
+        ax=ax,
+        grid=True,
+        secondary_y=True,
+        color='green',
+        alpha=0.2
+    ) 
+    ax.set_xlabel('date')
+    ax.set_ylabel('number of customers')
+    ax.set_title('Customers vs. Repeat Customers Over Time')
+    ax2.set_ylabel('percentage (%)')
+    ax.legend(['Repeat Customers', 'All Customers'])
+    ax2.legend(['Percentage of Repeat'], loc='upper right')
+    ax.set_ylim([0, monthly_unique_customers_df.values.max()+100])
+    ax2.set_ylim([0, 100])
+    plt.xticks(
+    range(len(monthly_repeat_customers_df.index)),
+    [x.strftime('%m.%Y') for x in monthly_repeat_customers_df.index],
+    rotation=45
+    )
 
-
-
-
-
-
+def monthly_repeat_rev(df):
+    invoice_customer_df = df.groupby(
+        by=['InvoiceNo', 'InvoiceDate']
+        ).agg({
+        'Sales': sum,
+        'CustomerID': max,
+        'Country': max,
+        }).reset_index()
+    
+    # monthly rev df
+    monthly_revenue_df = df.set_index('InvoiceDate')['Sales'].resample('M').sum()
+        
+    monthly_rev_repeat_customers_df = invoice_customer_df.set_index('InvoiceDate').groupby([
+    pd.Grouper(freq='M'), 'CustomerID']).filter(lambda x: len(x) > 1).resample('M').sum()['Sales']
+    monthly_rev_perc_repeat_customers_df = monthly_rev_repeat_customers_df/monthly_revenue_df
+    
+    # the plot
+    ax = pd.DataFrame(monthly_revenue_df.values).plot(figsize=(12,9))
+    pd.DataFrame(monthly_rev_repeat_customers_df.values).plot(
+    ax=ax,
+    grid=True,
+    ) 
+    ax.set_xlabel('date')
+    ax.set_ylabel('sales')
+    ax.set_title('Total Revenue vs. Revenue from Repeat Customers')
+    ax.legend(['Total Revenue', 'Repeat Customer Revenue'])
+    ax.set_ylim([0, max(monthly_revenue_df.values)+100000])
+    ax2 = ax.twinx()
+    pd.DataFrame(monthly_rev_perc_repeat_customers_df.values).plot(
+        ax=ax2,
+        kind='bar',
+        color='g',
+        alpha=0.2
+    ) 
+    ax2.set_ylim([0, max(monthly_rev_perc_repeat_customers_df.values)+30])
+    ax2.set_ylabel('percentage (%)')
+    ax2.legend(['Repeat Revenue Percentage'])
+    ax2.set_xticklabels([
+    x.strftime('%m.%Y') for x in monthly_rev_perc_repeat_customers_df.index])
+ 
+# Item analysis
+def item_analsis(df):
+    # unique items sold
+    date_item_df = df.set_index('InvoiceDate').groupby([
+    pd.Grouper(freq='M'), 'StockCode'])['Quantity'].sum()  
+    
+    # aggregate monthly sales
+    date_item_df = df.loc[df['StockCode'].isin([23084, 84826, 22197, 22086, '85099B'])
+    ].set_index('InvoiceDate').groupby([pd.Grouper(freq='M'), 'StockCode'])['Quantity'].sum()
+    
+    # the pivot table
+    trending_itmes_df = date_item_df.reset_index().pivot('InvoiceDate','StockCode').fillna(0)
+    trending_itmes_df = trending_itmes_df.reset_index()
+    trending_itmes_df = trending_itmes_df.set_index('InvoiceDate')
+    trending_itmes_df.columns = trending_itmes_df.columns.droplevel(0)
+    
+    # the plot
+    ax = pd.DataFrame(trending_itmes_df.values).plot(
+        figsize=(10,7),
+        grid=True,
+    )
+    ax.set_ylabel('number of purchases')
+    ax.set_xlabel('date')
+    ax.set_title('Item Trends over Time')
+    ax.legend(trending_itmes_df.columns, loc='upper left')
+    plt.xticks(
+    range(len(trending_itmes_df.index)),
+    [x.strftime('%m.%Y') for x in trending_itmes_df.index],
+    rotation=45
+    )
+    
+    
 if __name__ == "__main__":
     main()
