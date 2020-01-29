@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.express as px
+
 
 def main():
     pages = ['Home', 'Conversion', 'Product Analytics']
@@ -20,6 +20,7 @@ def main():
                     1. [https://www.amazon.com/Hands-Data-Science-Marketing-strategies/dp/1789346347](https://www.amazon.com/Hands-Data-Science-Marketing-strategies/dp/1789346347)
                     2. [https://www.amazon.com/Machine-Learning-Pocket-Reference-Structured/dp/1492047546](https://www.amazon.com/Machine-Learning-Pocket-Reference-Structured/dp/1492047546)
                     3. [https://www.amazon.com/Data-Science-Projects-Python-scikit-learn-ebook/dp/B07MLFJ564](https://www.amazon.com/Data-Science-Projects-Python-scikit-learn-ebook/dp/B07MLFJ564)
+                    4. [https://gilberttanner.com/blog/deploying-your-streamlit-dashboard-with-heroku](https://gilberttanner.com/blog/deploying-your-streamlit-dashboard-with-heroku)
                     
                     ''')
     elif option == 'Conversion':
