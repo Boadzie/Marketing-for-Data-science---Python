@@ -10,14 +10,16 @@ def main():
 
     if option == 'Home':
         st.markdown('# Marketing Dashbaords')
-        st.markdown('This is a series of Marketing Dashboards showing various marketing Key Performance Indicator(KPIs) for a marketing Firm.'\
-            'The app is built by [Boadzie Daniel](https://boadzie.surge.sh/) and The Students of [Artificial Intelligence Movement(AIM)](https://www.aimovement.club/)')
+        st.markdown('This app contains a series of Marketing Dashboards showing the application of Data Science in marketing.'\
+            ' The app is built by [Boadzie Daniel](https://boadzie.surge.sh/) and The Students of [Artificial Intelligence Movement(AIM)](https://www.aimovement.club/)')
         st.image('./img/Dan.jpg', width=200)
         st.image('./img/AIM.jpeg', width=700)
         st.markdown('---')
         st.markdown('## References')
         st.markdown('''
                     1. [https://www.amazon.com/Hands-Data-Science-Marketing-strategies/dp/1789346347](https://www.amazon.com/Hands-Data-Science-Marketing-strategies/dp/1789346347)
+                    2. [https://www.amazon.com/Machine-Learning-Pocket-Reference-Structured/dp/1492047546](https://www.amazon.com/Machine-Learning-Pocket-Reference-Structured/dp/1492047546)
+                    3. [https://www.amazon.com/Data-Science-Projects-Python-scikit-learn-ebook/dp/B07MLFJ564](https://www.amazon.com/Data-Science-Projects-Python-scikit-learn-ebook/dp/B07MLFJ564)
                     
                     ''')
     elif option == 'Conversion':
@@ -93,7 +95,7 @@ def main():
 
 
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def load_data():
     df = pd.read_csv("./data/bank-additional-full.csv", sep=';')
     df['conversion'] = df['y'].apply(lambda x: 1 if x == 'yes' else 0)
@@ -183,7 +185,8 @@ def by_agemarital(df):
 
 ################### FUNCTIONS FOR PRODUCTS DASHBOARD#########################
 
-@st.cache()
+
+@st.cache(allow_output_mutation=True)
 def load_prod_data():
     df = pd.read_excel(io ="./data/Online-Retail.xlsx", sheet_name='Online Retail')
     # df['conversion'] = df['y'].apply(lambda x: 1 if x == 'yes' else 0)
